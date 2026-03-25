@@ -47,7 +47,7 @@ sources = [
     # Option A: GitHub release tag (use this for Yggdrasil PR)
     GitSource(
         "https://github.com/profsms/TopoTS.jl.git",
-        "v0.3.0"   # git tag; create this when you tag the TopoTS release
+        "6230968b62a2c29cdc1e64d6016f7042e242aaef"   # git tag; create this when you tag the TopoTS release
     ),
 
     # Option B: local directory (for development without pushing)
