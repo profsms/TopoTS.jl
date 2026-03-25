@@ -15,7 +15,7 @@
 #   julia build_tarballs.jl --verbose x86_64-linux-gnu
 #
 #   # Build and auto-deploy to your GitHub JLL repo
-#   julia build_tarballs.jl --verbose --deploy=shalkiewicz/CechCore_jll.jl
+#   julia build_tarballs.jl --verbose --deploy=profsms/CechCore_jll.jl
 #
 # ── After building ────────────────────────────────────────────────────────────
 #
@@ -46,7 +46,7 @@ version = v"1.0.0"
 sources = [
     # Option A: GitHub release tag (use this for Yggdrasil PR)
     GitSource(
-        "https://github.com/shalkiewicz/TopoTS.jl.git",
+        "https://github.com/profsms/TopoTS.jl.git",
         "v0.3.0"   # git tag; create this when you tag the TopoTS release
     ),
 

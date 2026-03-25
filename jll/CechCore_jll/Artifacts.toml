@@ -22,7 +22,7 @@ libc   = "glibc"
 git-tree-sha1 = "70c2ca663e72b47e49d519ff2f19b82e3412dfda"
 
     [[CechCore.download]]
-    url    = "https://github.com/shalkiewicz/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.x86_64-linux-gnu.tar.gz"
+    url    = "https://github.com/profsms/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.x86_64-linux-gnu.tar.gz"
     sha256 = "1a6c03dbe2c0e012679da2434c64be95f91c2611ec13689eacd45b2c0d0bd95b"
 
 # ── Linux x86_64 musl (Alpine, static linking) ───────────────────────────────
@@ -33,7 +33,7 @@ libc   = "musl"
 git-tree-sha1 = "REPLACE_AFTER_BINARYBUILDER_CI"
 
     [[CechCore.download]]
-    url    = "https://github.com/shalkiewicz/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.x86_64-linux-musl.tar.gz"
+    url    = "https://github.com/profsms/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.x86_64-linux-musl.tar.gz"
     sha256 = "REPLACE_AFTER_BINARYBUILDER_CI"
 
 # ── Linux aarch64 glibc (AWS Graviton 2/3, RPi 4 64-bit) ─────────────────────
@@ -44,7 +44,7 @@ libc   = "glibc"
 git-tree-sha1 = "REPLACE_AFTER_BINARYBUILDER_CI"
 
     [[CechCore.download]]
-    url    = "https://github.com/shalkiewicz/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.aarch64-linux-gnu.tar.gz"
+    url    = "https://github.com/profsms/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.aarch64-linux-gnu.tar.gz"
     sha256 = "REPLACE_AFTER_BINARYBUILDER_CI"
 
 # ── Linux armv7l glibc (RPi 3, 32-bit ARM) ───────────────────────────────────
@@ -55,7 +55,7 @@ libc   = "glibc"
 git-tree-sha1 = "REPLACE_AFTER_BINARYBUILDER_CI"
 
     [[CechCore.download]]
-    url    = "https://github.com/shalkiewicz/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.armv7l-linux-gnueabihf.tar.gz"
+    url    = "https://github.com/profsms/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.armv7l-linux-gnueabihf.tar.gz"
     sha256 = "REPLACE_AFTER_BINARYBUILDER_CI"
 
 # ── macOS x86_64 (Intel Macs) ─────────────────────────────────────────────────
@@ -65,7 +65,7 @@ os     = "macos"
 git-tree-sha1 = "REPLACE_AFTER_BINARYBUILDER_CI"
 
     [[CechCore.download]]
-    url    = "https://github.com/shalkiewicz/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.x86_64-apple-darwin.tar.gz"
+    url    = "https://github.com/profsms/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.x86_64-apple-darwin.tar.gz"
     sha256 = "REPLACE_AFTER_BINARYBUILDER_CI"
 
 # ── macOS aarch64 (Apple Silicon M1/M2/M3/M4) ────────────────────────────────
@@ -75,7 +75,7 @@ os     = "macos"
 git-tree-sha1 = "REPLACE_AFTER_BINARYBUILDER_CI"
 
     [[CechCore.download]]
-    url    = "https://github.com/shalkiewicz/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.aarch64-apple-darwin.tar.gz"
+    url    = "https://github.com/profsms/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.aarch64-apple-darwin.tar.gz"
     sha256 = "REPLACE_AFTER_BINARYBUILDER_CI"
 
 # ── Windows x86_64 ───────────────────────────────────────────────────────────
@@ -85,7 +85,7 @@ os     = "windows"
 git-tree-sha1 = "REPLACE_AFTER_BINARYBUILDER_CI"
 
     [[CechCore.download]]
-    url    = "https://github.com/shalkiewicz/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.x86_64-w64-mingw32.tar.gz"
+    url    = "https://github.com/profsms/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.x86_64-w64-mingw32.tar.gz"
     sha256 = "REPLACE_AFTER_BINARYBUILDER_CI"
 
 # ── FreeBSD x86_64 ────────────────────────────────────────────────────────────
@@ -95,5 +95,5 @@ os     = "freebsd"
 git-tree-sha1 = "REPLACE_AFTER_BINARYBUILDER_CI"
 
     [[CechCore.download]]
-    url    = "https://github.com/shalkiewicz/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.x86_64-unknown-freebsd.tar.gz"
+    url    = "https://github.com/profsms/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.x86_64-unknown-freebsd.tar.gz"
     sha256 = "REPLACE_AFTER_BINARYBUILDER_CI"
