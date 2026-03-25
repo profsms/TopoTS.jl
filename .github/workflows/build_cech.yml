@@ -1,0 +1,35 @@
+name: Build CechCore binaries
+
+on:
+  workflow_dispatch:   # manual trigger from GitHub Actions tab
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.10'   # BinaryBuilder works reliably on 1.10
+
+      - name: Install BinaryBuilder
+        run: julia -e 'using Pkg; Pkg.add("BinaryBuilder")'
+
+      - name: Build tarballs
+        run: julia jll/build_recipe/build_tarballs.jl --verbose
+
+      - name: Upload tarballs as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: CechCore-tarballs
+          path: products/*.tar.gz
+
+      - name: Upload Artifacts.toml
+        uses: actions/upload-artifact@v4
+        with:
+          name: Artifacts-toml
+          path: Artifacts.toml
