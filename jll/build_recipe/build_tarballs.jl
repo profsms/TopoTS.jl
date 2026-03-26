@@ -70,6 +70,9 @@ SRC="${WORKSPACE}/srcdir/TopoTS.jl/csrc"
 ls "${SRC}/cech_core.cpp" || (echo "ERROR: cech_core.cpp not found"; exit 1)
 
 
+# Ensure output directories exist
+mkdir -p "${libdir}" "${includedir}"
+
 # Build the shared library for the target platform
 ${CXX} -O3 -std=c++17 -shared -fPIC \
     ${CXXFLAGS} \
