@@ -64,7 +64,7 @@ cd ${WORKSPACE}/srcdir
 
 # Sources land in srcdir; the csrc/ directory contains our C++ files.
 # Adjust the path if using DirectorySource.
-SRC="${WORKSPACE}/srcdir/csrc"
+SRC="${WORKSPACE}/srcdir/TopoTS.jl/csrc"
 
 # Confirm the source is present
 ls "${SRC}/cech_core.cpp" || (echo "ERROR: cech_core.cpp not found"; exit 1)
