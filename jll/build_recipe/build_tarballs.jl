@@ -92,6 +92,7 @@ echo "Build succeeded: ${libdir}/libcech.${dlext}"
 # BinaryBuilder's default GCC 9 shard handles all of these.
 
 platforms = expand_cxxstring_abis(supported_platforms())
+filter!(p -> arch(p) != "riscv64", platforms)
 
 # Filter out platforms where the toolchain is known to lack C++17
 # (typically old armv6 or i686 — uncomment if needed)
