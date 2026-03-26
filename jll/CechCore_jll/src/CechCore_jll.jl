@@ -30,7 +30,7 @@ ver = unsafe_string(ccall((:cech_version, libcech), Ptr{Cchar}, ()))
 """
 module CechCore_jll
 
-using Artifacts, JLLWrappers, Libdl, Pkg
+using Artifacts, JLLWrappers, Libdl
 
 # ── Artifact resolution ───────────────────────────────────────────────────────
 

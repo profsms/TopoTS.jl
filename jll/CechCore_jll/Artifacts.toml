@@ -132,7 +132,7 @@ git-tree-sha1 = "c40af173313608792b2ffc4f8fce2076ee9fa42f"
 [[CechCore]]
 arch = "x86_64"
 os = "macos"
-git-tree-sha1 = "856dffbe2e8bb7fda7e7c1e4bc983fb68bb172a2"
+git-tree-sha1 = "6393798840445fe31b6292d44db884113daa6fbb"
 
     [[CechCore.download]]
     url = "https://github.com/profsms/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.x86_64-apple-darwin.tar.gz"
@@ -143,7 +143,7 @@ arch = "x86_64"
 os = "linux"
 libc = "glibc"
 cxxstring_abi = "cxx11"
-git-tree-sha1 = "5c330b65120e63c8388de0b26df7af1ecb9a89fe"
+git-tree-sha1 = "ad21dd83479534b070b39ff319f5b4a4881aa9c9"
 
     [[CechCore.download]]
     url = "https://github.com/profsms/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.x86_64-linux-gnu-cxx11.tar.gz"
@@ -154,7 +154,7 @@ arch = "x86_64"
 os = "linux"
 libc = "musl"
 cxxstring_abi = "cxx11"
-git-tree-sha1 = "7b8fdb51564968e28c5aaca0bbac7f452bd59b06"
+git-tree-sha1 = "e055eac6d80d4ef23e1ccbfa05713727549c9c55"
 
     [[CechCore.download]]
     url = "https://github.com/profsms/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.x86_64-linux-musl-cxx11.tar.gz"
@@ -163,7 +163,7 @@ git-tree-sha1 = "7b8fdb51564968e28c5aaca0bbac7f452bd59b06"
 [[CechCore]]
 arch = "x86_64"
 os = "freebsd"
-git-tree-sha1 = "1c4847593ae98dce4cb22e2007bf922678739091"
+git-tree-sha1 = "f66f0b73b6aba16ac10757bb943214208d5ac0ed"
 
     [[CechCore.download]]
     url = "https://github.com/profsms/CechCore_jll.jl/releases/download/CechCore-v1.0.0+0/CechCore.v1.0.0.x86_64-unknown-freebsd.tar.gz"

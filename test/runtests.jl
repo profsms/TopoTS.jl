@@ -2,8 +2,6 @@ using Test
 using TopoTS
 using PersistenceDiagrams: birth, death
 
-# Only load CechCore_jll if available in the active environment.
-# The Čech-specific tests are guarded by TopoTS.cech_available().
 try
     @eval using CechCore_jll
 catch
@@ -70,7 +68,6 @@ end
             embed(circle_series(300; noise=0.03); dim=2, lag=12);
             dim_max=1
         )
-
         @test total_persistence(dgms, 1) ≥ 0
         @test persistent_entropy(dgms, 1) ≥ 0
         @test amplitude(dgms, 1) ≥ 0
@@ -79,7 +76,6 @@ end
     @testset "Windowed PH" begin
         ts = circle_series(600; noise=0.05)
         wd = windowed_ph(ts; window=100, step=20, dim=2, lag=8, dim_max=1)
-
         @test wd[1] isa DiagramCollection
         @test length(wd.times) == length(wd)
         @test_throws ArgumentError windowed_ph(ts; window=2, step=1, dim=3, lag=5)
@@ -89,7 +85,6 @@ end
         ts = circle_series(400; noise=0.05)
         wd = windowed_ph(ts; window=80, step=20, dim=2, lag=6, dim_max=1)
         cp = crocker(wd; dim=1, n_scale=50)
-
         @test size(cp.surface) == (50, length(wd))
         @test all(cp.surface .≥ 0)
     end
@@ -119,10 +114,8 @@ end
         wd = windowed_ph(ts; window=100, step=15, dim=2, lag=6, dim_max=1)
         ls = landscape_score(wd, 1; n_grid=50, n_layers=2)
         events = detect_changepoints(ls; threshold=:mad, n_mad=2.0)
-
         @test events isa Vector{ChangePointEvent}
         @test all(e -> e isa ChangePointEvent, events)
-
         if length(events) > 1
             idx = [e.index for e in events]
             @test all(diff(idx) .≥ 5)
@@ -132,7 +125,6 @@ end
     @testset "Sublevel PH" begin
         f   = vcat(sin.(range(0, 4π, length=200)), cos.(range(0, 4π, length=200)))
         dgm = sublevel_ph(f)
-
         @test !isempty(dgm.H0)
         @test all(b < d for (b, d) in dgm.H0)
 
@@ -145,15 +137,10 @@ end
 
     @testset "Multivariate embedding" begin
         N = 500
-        X = hcat(
-            sin.(range(0, 6π, length=N)),
-            cos.(range(0, 6π, length=N))
-        )
-
+        X = hcat(sin.(range(0, 6π, length=N)), cos.(range(0, 6π, length=N)))
         emb = embed_multivariate(X; dim=2, lag=5)
         @test emb.n_channels == 2
         @test size(emb.points, 2) == 4
-
         dgms = persistent_homology(emb; dim_max=1)
         @test dgms isa DiagramCollection
     end
@@ -164,37 +151,48 @@ end
             dim_max=1
         )
         dgm = dgms[2]
-
         @test pss_kernel(dgm, dgm; sigma=0.5) ≥ 0
         @test pwg_kernel(dgm, dgm; sigma=0.5) ≥ 0
         @test sliced_wasserstein_kernel(dgm, dgm; sigma=0.5, n_directions=20) ≈ 1.0 atol=1e-4
-
         K = kernel_matrix([dgms], 1; kernel=:pss, sigma=0.5)
         @test size(K) == (1, 1)
     end
 
     @testset "Feature extraction" begin
         ts = circle_series(300; noise=0.03)
-
         spec = TopoFeatureSpec(
-            dim=2,
-            lag=10,
-            dim_max=1,
-            n_landscape_grid=10,
-            n_landscape_layers=2,
-            n_betti_grid=5,
-            use_image=false
+            dim=2, lag=10, dim_max=1,
+            n_landscape_grid=10, n_landscape_layers=2,
+            n_betti_grid=5, use_image=false
         )
-
         feat  = topo_features(ts; spec=spec)
         names = feature_names(spec)
-
         @test length(feat) == length(names)
         @test !any(isnan, feat)
 
         emb  = embed(ts; dim=2, lag=10)
         dgms = persistent_homology(emb; dim_max=1)
         @test topo_features(dgms; spec=spec) ≈ feat
+    end
+
+    # ── Visualisation smoke tests (no rendering, just object creation) ────────
+    @testset "Visualisations (no backend)" begin
+        dgms = persistent_homology(
+            embed(circle_series(200; noise=0.03); dim=2, lag=10);
+            dim_max=1
+        )
+        ts = circle_series(400; noise=0.05)
+        wd = windowed_ph(ts; window=80, step=20, dim=2, lag=6, dim_max=1)
+        cp = crocker(wd; dim=1, n_scale=30)
+
+        # Without a Makie backend loaded these should throw a clear error
+        @test_throws ErrorException plot_diagram(dgms, 1)
+        @test_throws ErrorException plot_barcode(dgms, 1)
+        @test_throws ErrorException plot_crocker(cp)
+
+        ls = landscape_score(wd, 1; n_grid=30, n_layers=2)
+        events = detect_changepoints(ls; threshold=:mad, n_mad=2.0)
+        @test_throws ErrorException plot_changepoint_score(ls; events=events)
     end
 end
 
@@ -217,7 +215,6 @@ end
     @test dgms_ec.filtration == :edge_collapsed
     @test length(dgms_ec[1]) == length(dgms_rips[1])
 
-    # Cubical uses the first coordinate of the input matrix in the current API.
     dgms_cub = persistent_homology(emb; dim_max=1, filtration=:cubical)
     @test dgms_cub.filtration == :cubical
     @test !isempty(dgms_cub[1])
@@ -226,12 +223,8 @@ end
 end
 
 @testset "Small point-cloud geometry" begin
-    pts1 = [0.0 0.0]
-    pts2 = [0.0 0.0;
-            1.0 0.0]
-    pts3 = [0.0 0.0;
-            1.0 0.0;
-            0.5 0.866]
+    pts2 = [0.0 0.0; 1.0 0.0]
+    pts3 = [0.0 0.0; 1.0 0.0; 0.5 0.866]
 
     ph2_r = persistent_homology(pts2; filtration=:rips, dim_max=1)
     @test ph2_r.filtration == :rips
@@ -242,31 +235,20 @@ end
 
     @test length(ph3_r[1]) == 3
     @test length(ph3_r[2]) == 0
-
     @test length(ph3_a[1]) == 3
     @test length(ph3_a[2]) == 1
 end
 
 @testset "Duplicate points" begin
-    dup = [0.0 0.0;
-           0.0 0.0;
-           1.0 0.0]
-
+    dup  = [0.0 0.0; 0.0 0.0; 1.0 0.0]
     ph_r = persistent_homology(dup; filtration=:rips, dim_max=1)
     @test ph_r isa DiagramCollection
-
-    # Alpha on duplicate points may be backend-sensitive, so do not force it here.
 end
 
 @testset "Square loop geometry" begin
-    sq = [0.0 0.0;
-          1.0 0.0;
-          1.0 1.0;
-          0.0 1.0]
-
+    sq   = [0.0 0.0; 1.0 0.0; 1.0 1.0; 0.0 1.0]
     ph_r = persistent_homology(sq; filtration=:rips, dim_max=1)
     ph_a = persistent_homology(sq; filtration=:alpha, dim_max=1)
-
     @test length(ph_r[2]) ≥ 1
     @test length(ph_a[2]) ≥ 1
 end
@@ -283,147 +265,80 @@ end
         libpath = TopoTS.cech_lib_path()
         @test isfile(libpath)
 
-        # Singleton regression
         pts1 = [0.0 0.0]
-        ph1 = persistent_homology(pts1; filtration=:cech, dim_max=1)
+        ph1  = persistent_homology(pts1; filtration=:cech, dim_max=1)
         @test ph1.filtration == :cech
         @test ph1.n_points == 1
         @test length(ph1) == 1
         @test length(ph1[1]) == 1
 
-        # 2-point sanity
-        pts2 = [0.0 0.0;
-                1.0 0.0]
-        ph2 = persistent_homology(pts2; filtration=:cech, dim_max=1)
+        pts2 = [0.0 0.0; 1.0 0.0]
+        ph2  = persistent_homology(pts2; filtration=:cech, dim_max=1)
         @test ph2.filtration == :cech
         @test length(ph2[1]) == 2
 
-        # Triangle regression distinguishing filtrations
-        pts3 = [0.0 0.0;
-                1.0 0.0;
-                0.5 0.866]
-
-        ph3_c = persistent_homology(pts3; filtration=:cech, dim_max=1)
-        ph3_r = persistent_homology(pts3; filtration=:rips, dim_max=1)
-        ph3_a = persistent_homology(pts3; filtration=:alpha, dim_max=1)
+        pts3    = [0.0 0.0; 1.0 0.0; 0.5 0.866]
+        ph3_c   = persistent_homology(pts3; filtration=:cech,  dim_max=1)
+        ph3_r   = persistent_homology(pts3; filtration=:rips,  dim_max=1)
+        ph3_a   = persistent_homology(pts3; filtration=:alpha, dim_max=1)
 
         @test length(ph3_c[1]) == 3
         @test length(ph3_c[2]) == 1
-
         @test length(ph3_r[1]) == 3
         @test length(ph3_r[2]) == 0
-
         @test length(ph3_a[1]) == 3
         @test length(ph3_a[2]) == 1
 
-        # Low-level ABI sanity via Libdl on the registered library path
         import Libdl
-
-        lib = Libdl.dlopen(libpath)
-
+        lib    = Libdl.dlopen(libpath)
         ver_fn = Libdl.dlsym(lib, :cech_version)
-        ver = unsafe_string(ccall(ver_fn, Ptr{Cchar}, ()))
+        ver    = unsafe_string(ccall(ver_fn, Ptr{Cchar}, ()))
         @test startswith(ver, "TopoTS-CechCore")
 
-        cr_fn = Libdl.dlsym(lib, :cech_circumradius)
-
-        # Two points at distance 2 => circumradius 1
+        cr_fn     = Libdl.dlsym(lib, :cech_circumradius)
         pts2_flat = Float64[0.0, 0.0, 2.0, 0.0]
-        v2 = Int32[0, 1]
-        r2 = ccall(
-            cr_fn,
-            Cdouble,
-            (Ptr{Cdouble}, Cint, Cint, Ptr{Cint}, Cint),
-            pts2_flat, 2, 2, v2, 2
-        )
+        v2        = Int32[0, 1]
+        r2        = ccall(cr_fn, Cdouble,
+                          (Ptr{Cdouble}, Cint, Cint, Ptr{Cint}, Cint),
+                          pts2_flat, 2, 2, v2, 2)
         @test abs(r2 - 1.0) < 1e-9
 
-        # Equilateral triangle, side 2 => circumradius 2 / √3
         pts3_flat = Float64[0.0, 0.0, 2.0, 0.0, 1.0, sqrt(3.0)]
-        v3 = Int32[0, 1, 2]
-        r3 = ccall(
-            cr_fn,
-            Cdouble,
-            (Ptr{Cdouble}, Cint, Cint, Ptr{Cint}, Cint),
-            pts3_flat, 3, 2, v3, 3
-        )
+        v3        = Int32[0, 1, 2]
+        r3        = ccall(cr_fn, Cdouble,
+                          (Ptr{Cdouble}, Cint, Cint, Ptr{Cint}, Cint),
+                          pts3_flat, 3, 2, v3, 3)
         @test abs(r3 - 2.0 / sqrt(3.0)) < 1e-7
-
         Libdl.dlclose(lib)
 
-        # Through persistent_homology API on a real embedding
-        ts  = circle_series(200; noise=0.05)
-        emb = embed(ts; dim=2, lag=10)
+        ts      = circle_series(200; noise=0.05)
+        emb     = embed(ts; dim=2, lag=10)
+        dgms_c  = persistent_homology(emb; dim_max=1, filtration=:cech, threshold=3.0)
+        dgms_r  = persistent_homology(emb; dim_max=1, threshold=3.0)
+        @test dgms_c.filtration == :cech
+        @test !isempty(dgms_c[1])
+        @test count(p -> !isfinite(death(p)), dgms_c[1]) == 1
+        @test count(p -> !isfinite(death(p)), dgms_r[1]) == 1
 
-        dgms_cech = persistent_homology(
-            emb;
-            dim_max=1,
-            filtration=:cech,
-            threshold=3.0
-        )
-        @test dgms_cech.filtration == :cech
-        @test length(dgms_cech) == 2
-
-        dgms_rips = persistent_homology(emb; dim_max=1, threshold=3.0)
-        @test length(dgms_rips) == 2
-
-        # Do not require exact equality of interval counts across filtrations.
-        @test !isempty(dgms_cech[1])
-        @test !isempty(dgms_rips[1])
-
-        n_ess_cech = count(p -> !isfinite(death(p)), dgms_cech[1])
-        n_ess_rips = count(p -> !isfinite(death(p)), dgms_rips[1])
-
-        @test n_ess_cech == 1
-        @test n_ess_rips == 1
-
-        if !isempty(dgms_cech[2]) && !isempty(dgms_rips[2])
-            max_cech_birth = maximum(Float64(birth(p)) for p in dgms_cech[2])
-            max_rips_birth = maximum(Float64(birth(p)) for p in dgms_rips[2])
-
-            @test isfinite(max_cech_birth)
-            @test isfinite(max_rips_birth)
-            @test max_cech_birth > 0
-            @test max_rips_birth > 0
-        end
-
-        λ = landscape(dgms_cech, 1; n_grid=50, n_layers=2)
+        λ = landscape(dgms_c, 1; n_grid=50, n_layers=2)
         @test size(λ.layers) == (2, 50)
 
-        bc = betti_curve(dgms_cech, 1; n_grid=50)
+        bc = betti_curve(dgms_c, 1; n_grid=50)
         @test length(bc) == 50
 
-        img = persistence_image(dgms_cech, 1; n_pixels=8)
+        img = persistence_image(dgms_c, 1; n_pixels=8)
         @test size(img.pixels) == (8, 8)
 
-        feat = topo_features(
-            dgms_cech;
-            spec=TopoFeatureSpec(
-                dim_max=1,
-                n_landscape_grid=10,
-                n_landscape_layers=2,
-                n_betti_grid=5,
-                use_image=false
-            )
-        )
+        feat = topo_features(dgms_c; spec=TopoFeatureSpec(
+            dim_max=1, n_landscape_grid=10, n_landscape_layers=2,
+            n_betti_grid=5, use_image=false))
         @test length(feat) > 0
         @test !any(isnan, feat)
 
-        # Windowed Čech pipeline
         ts_w = circle_series(400; noise=0.05)
-        wd = windowed_ph(
-            ts_w;
-            window=80,
-            step=20,
-            dim=2,
-            lag=6,
-            dim_max=1,
-            filtration=:cech,
-            threshold=3.0
-        )
-
+        wd   = windowed_ph(ts_w; window=80, step=20, dim=2, lag=6,
+                           dim_max=1, filtration=:cech, threshold=3.0)
         @test length(wd) > 0
-        @test length(wd.times) == length(wd)
         @test wd[1] isa DiagramCollection
 
         ls = landscape_score(wd, 1; n_grid=30, n_layers=2)

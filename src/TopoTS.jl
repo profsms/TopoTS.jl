@@ -18,6 +18,7 @@ Implements the full pipeline:
   9.  Multivariate    — Joint delay embedding of k-channel time series
   10. Kernels         — PSS, PWG, sliced-Wasserstein diagram kernels
   11. Features        — Flat feature vector extraction for ML pipelines
+  12. Visualisations  — Makie-based plots (requires CairoMakie / GLMakie)
 
 # Čech filtration
 
@@ -144,6 +145,7 @@ include("sublevel/Sublevel.jl")
 include("multivariate/Multivariate.jl")
 include("kernels/DiagramKernels.jl")
 include("features/Features.jl")
+include("visualisations/Visualisations.jl")
 
 using .Embedding
 using .Filtration
@@ -160,6 +162,7 @@ using .Sublevel
 using .Multivariate
 using .DiagramKernels
 using .Features
+using .Visualisations
 
 # ── Public API ────────────────────────────────────────────────────────────────
 export
@@ -195,6 +198,13 @@ export
     # Kernels
     pss_kernel, pwg_kernel, sliced_wasserstein_kernel, kernel_matrix,
     # Features
-    topo_features, TopoFeatureSpec, feature_names
+    topo_features, TopoFeatureSpec, feature_names,
+    # Visualisations
+    plot_diagram, plot_diagram_multi,
+    plot_barcode,
+    plot_landscape,
+    plot_betti_curve,
+    plot_crocker, plot_crocker_multi,
+    plot_changepoint_score
 
 end # module TopoTS

@@ -1,39 +1,37 @@
-name    = "TopoTS"
-uuid    = "dc0f521d-5d0d-4248-bff6-a823dd2a26ec"
+name = "TopoTS"
+uuid = "dc0f521d-5d0d-4248-bff6-a823dd2a26ec"
 authors = ["Stanisław M. S. Halkiewicz <s.halkiewicz@student.agh.edu.pl>"]
 version = "0.3.0"
 
 [deps]
-Distances           = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
-Interpolations      = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
-Libdl               = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
-LinearAlgebra       = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
-PersistenceDiagrams = "90b4794c-894b-4756-a0f8-5efeb5ddf7ae"
-Ripserer            = "aa79e827-bd0b-42a8-9f10-2b302677a641"
-SparseArrays        = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
-Statistics          = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
-StatsBase           = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
-
-[weakdeps]
 CechCore_jll = "06693213-f79a-4f07-b1f2-49bcb6776124"
+Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
+Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
+Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+PersistenceDiagrams = "90b4794c-894b-4756-a0f8-5efeb5ddf7ae"
+Ripserer = "aa79e827-bd0b-42a8-9f10-2b302677a641"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [extensions]
 TopoTSCechExt = "CechCore_jll"
 
 [compat]
-julia               = "1.9"
-Distances           = "0.10"
-Interpolations      = "0.15"
+CechCore_jll = "1"
+Distances = "0.10"
+Interpolations = "0.15"
 PersistenceDiagrams = "0.9"
-Ripserer            = "0.16"
-SparseArrays        = "1"
-Statistics          = "1"
-StatsBase           = "0.33, 0.34"
-CechCore_jll        = "1"
+Ripserer = "0.16"
+SparseArrays = "1"
+Statistics = "1"
+StatsBase = "0.33, 0.34"
+julia = "1.9"
 
 [extras]
-Test         = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-CairoMakie   = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test", "CairoMakie"]
