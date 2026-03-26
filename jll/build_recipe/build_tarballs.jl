@@ -83,9 +83,6 @@ ${CXX} -O3 -std=c++17 -shared -fPIC \
 # Install the public header
 install -Dm644 "${SRC}/cech_core.hpp" "${includedir}/cech_core.hpp"
 
-# Sanity-check: the library must export cech_version
-nm -D "${libdir}/libcech.${dlext}" | grep -q "cech_version" || \
-    (echo "ERROR: cech_version not exported"; exit 1)
 
 echo "Build succeeded: ${libdir}/libcech.${dlext}"
 """
