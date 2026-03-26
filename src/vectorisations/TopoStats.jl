@@ -9,6 +9,7 @@ stable with respect to the bottleneck or Wasserstein metrics.
 module TopoStats
 
 using ..Filtration: DiagramCollection
+using PersistenceDiagrams: birth, death
 
 export total_persistence, persistent_entropy, amplitude
 

@@ -60,23 +60,43 @@ end
 # ─────────────────────────────────────────────────────────────────────────────
 
 function _compute(pts, filtration, dim_max, threshold, modulus)
-    rips_kw = (dim_max = dim_max, modulus = modulus)
-    if !isinf(threshold)
-        rips_kw = merge(rips_kw, (threshold = Float64(threshold),))
-    end
-
     if filtration == :rips
-        pointcloud = _pointcloud(pts)
+        pointcloud = _pointcloud(pts; unique_only = true)
+        n_eff = length(pointcloud)
+        dim_eff = min(dim_max, max(n_eff - 2, 0))
+
+        rips_kw = (dim_max = dim_eff, modulus = modulus)
+        if !isinf(threshold)
+            rips_kw = merge(rips_kw, (threshold = Float64(threshold),))
+        end
+
         return ripserer(pointcloud; rips_kw...)
 
     elseif filtration == :alpha
         size(pts, 2) <= 3 || @warn(
             "Alpha filtration is recommended for ≤3D; got $(size(pts, 2))D")
-        pointcloud = _pointcloud(pts)
+
+        pointcloud = _pointcloud(pts; unique_only = true)
+        n_eff = length(pointcloud)
+        dim_eff = min(dim_max, max(n_eff - 2, 0))
+
+        rips_kw = (dim_max = dim_eff, modulus = modulus)
+        if !isinf(threshold)
+            rips_kw = merge(rips_kw, (threshold = Float64(threshold),))
+        end
+
         return ripserer(Alpha, pointcloud; rips_kw...)
 
     elseif filtration == :edge_collapsed
-        pointcloud = _pointcloud(pts)
+        pointcloud = _pointcloud(pts; unique_only = true)
+        n_eff = length(pointcloud)
+        dim_eff = min(dim_max, max(n_eff - 2, 0))
+
+        rips_kw = (dim_max = dim_eff, modulus = modulus)
+        if !isinf(threshold)
+            rips_kw = merge(rips_kw, (threshold = Float64(threshold),))
+        end
+
         return ripserer(EdgeCollapsedRips, pointcloud; rips_kw...)
 
     elseif filtration == :cubical
@@ -143,7 +163,10 @@ _pts(emb::TakensEmbedding) = emb.points
 _pts(pts::AbstractMatrix)  = Matrix{Float64}(pts)
 _pts(emb)                  = Matrix{Float64}(emb.points)
 
-_pointcloud(pts::AbstractMatrix) = [Tuple(@view pts[i, :]) for i in axes(pts, 1)]
+function _pointcloud(pts::AbstractMatrix; unique_only::Bool = false)
+    pc = [Tuple(@view pts[i, :]) for i in axes(pts, 1)]
+    return unique_only ? unique(pc) : pc
+end
 
 function _singleton_diagram_collection(filtration::Symbol)
     # One connected component born at 0, no higher-dimensional features.

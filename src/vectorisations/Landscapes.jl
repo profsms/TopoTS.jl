@@ -11,6 +11,7 @@ module Landscapes
 
 using Statistics
 using ..Filtration: DiagramCollection
+using PersistenceDiagrams: birth, death
 
 export landscape, PersistenceLandscape, mean_landscape, landscape_norm
 

@@ -19,7 +19,7 @@ AMS. Chapter VII.
 """
 module Sublevel
 
-export sublevel_ph, SublevelDiagram
+export sublevel_ph, SublevelDiagram, windowed_sublevel_ph
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Types

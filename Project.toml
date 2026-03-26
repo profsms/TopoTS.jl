@@ -32,8 +32,8 @@ StatsBase           = "0.33, 0.34"
 CechCore_jll        = "1"
 
 [extras]
-Test       = "8dfed614-e22c-358a-b075-142a87a6a9e6"
-CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+Test         = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+CairoMakie   = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 
 [targets]
-test = ["Test"]
+test = ["Test", "CairoMakie"]

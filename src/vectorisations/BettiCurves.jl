@@ -6,6 +6,7 @@ Betti curve (persistent Betti number function) computation and utilities.
 module BettiCurves
 
 using ..Filtration: DiagramCollection
+using PersistenceDiagrams: birth, death
 
 export betti_curve, BettiCurve
 

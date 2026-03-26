@@ -16,6 +16,7 @@ Topological data analysis of biological aggregation models.
 module CROCKER
 
 using ..Windowed: WindowedDiagrams
+using PersistenceDiagrams: birth, death
 
 export crocker, CROCKERPlot
 

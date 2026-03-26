@@ -19,6 +19,7 @@ A stable multi-scale kernel for topological machine learning.
 *CVPR*, 4741–4748.
 """
 module DiagramKernels
+using PersistenceDiagrams: birth, death
 
 export pss_kernel, pwg_kernel, sliced_wasserstein_kernel,
        kernel_matrix

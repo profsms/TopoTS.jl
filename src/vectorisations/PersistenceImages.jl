@@ -9,6 +9,7 @@ a weighted point cloud in birth–persistence coordinates with a Gaussian kernel
 module PersistenceImages
 
 using ..Filtration: DiagramCollection
+using PersistenceDiagrams: birth, death
 
 export persistence_image, PersistenceImage
 

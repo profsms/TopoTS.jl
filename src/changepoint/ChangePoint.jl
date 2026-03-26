@@ -30,6 +30,7 @@ using Statistics
 using ..Windowed:    WindowedDiagrams
 using ..Landscapes:  PersistenceLandscape, landscape, landscape_norm
 using ..Filtration:  DiagramCollection
+using PersistenceDiagrams: birth, death
 
 export changepoint_score, ChangePointResult,
        detect_changepoints, ChangePointEvent,
@@ -192,17 +193,46 @@ function _wasserstein(pairs1::Vector{<:Tuple}, pairs2::Vector{<:Tuple}; p::Real=
 end
 
 function _greedy_assign(C::Matrix{Float64}, N::Int)
-    assigned_col = fill(false, N)
-    assignment   = zeros(Int, N)
+    # Candidate columns for each row, sorted by increasing cost.
+    candidates = Vector{Vector{Int}}(undef, N)
     for i in 1:N
-        best_j, best_c = 0, Inf
-        for j in 1:N
-            !assigned_col[j] || continue
-            C[i, j] < best_c && (best_c = C[i, j]; best_j = j)
-        end
-        assignment[i]      = best_j
-        assigned_col[best_j] = true
+        js = [j for j in 1:N if isfinite(C[i, j])]
+        sort!(js, by = j -> C[i, j])
+        isempty(js) && error("No feasible assignment found in _greedy_assign; cost matrix row $i has no finite entries.")
+        candidates[i] = js
     end
+
+    # Process the most constrained rows first.
+    row_order = sortperm(1:N; by = i -> length(candidates[i]))
+
+    # match_col[j] = row currently assigned to column j, or 0 if free
+    match_col = zeros(Int, N)
+
+    function augment(i::Int, seen::Vector{Bool})
+        for j in candidates[i]
+            seen[j] && continue
+            seen[j] = true
+            if match_col[j] == 0 || augment(match_col[j], seen)
+                match_col[j] = i
+                return true
+            end
+        end
+        return false
+    end
+
+    for i in row_order
+        seen = fill(false, N)
+        augment(i, seen) || error("No feasible assignment found in _greedy_assign; could not match row $i.")
+    end
+
+    # Convert column->row matching into row->column assignment.
+    assignment = zeros(Int, N)
+    for j in 1:N
+        i = match_col[j]
+        i != 0 && (assignment[i] = j)
+    end
+
+    any(==(0), assignment) && error("No feasible assignment found in _greedy_assign; incomplete matching.")
     return assignment
 end
 
