@@ -48,6 +48,7 @@ module TopoTS
 using LinearAlgebra
 using Statistics
 using StatsBase
+using Libdl
 
 # ── Čech library path registry ────────────────────────────────────────────────
 # Populated by (in priority order):
@@ -86,11 +87,22 @@ function cech_available()
     p = _CECH_LIB[]
     isempty(p) && return false
     isfile(p)  || return false
+
+    local lib
     try
-        ver = unsafe_string(ccall((:cech_version, p), Ptr{Cchar}, ()))
+        lib = Libdl.dlopen(p)
+        sym = Libdl.dlsym(lib, :cech_version)
+        ver = unsafe_string(ccall(sym, Ptr{Cchar}, ()))
         return startswith(ver, "TopoTS-CechCore")
     catch
         return false
+    finally
+        if @isdefined(lib)
+            try
+                Libdl.dlclose(lib)
+            catch
+            end
+        end
     end
 end
 

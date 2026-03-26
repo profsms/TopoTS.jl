@@ -40,7 +40,7 @@ using Artifacts, JLLWrappers, Libdl, Pkg
 const artifact_dir = @artifact_str("CechCore")
 
 # Platform-correct library filename
-const _libname = Sys.iswindows()  ? "cech.dll"       :
+const _libname = Sys.iswindows()  ? "libcech.dll"       :
                  Sys.isapple()    ? "libcech.dylib"   : "libcech.so"
 
 """
@@ -49,7 +49,7 @@ const _libname = Sys.iswindows()  ? "cech.dll"       :
 Absolute path to the platform-native `libcech` shared library.
 Resolved from the `CechCore` artifact at package load time.
 """
-const libcech = joinpath(artifact_dir, "lib", _libname)
+const libcech = joinpath(artifact_dir, Sys.iswindows() ? "bin" : "lib", _libname)
 
 # ── Library handle ────────────────────────────────────────────────────────────
 

@@ -518,13 +518,4 @@ function detect_changepoints(result::ChangePointResult;
     return events
 end
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Landscape dispatch helper (allows landscape_score to call landscape on wd)
-# ─────────────────────────────────────────────────────────────────────────────
-
-function Landscapes.landscape(wd_i::DiagramCollection, dim::Int;
-                               tgrid=nothing, n_grid::Int=200, n_layers::Int=3)
-    return landscape(wd_i, dim; tgrid=tgrid, n_grid=n_grid, n_layers=n_layers)
-end
-
 end # module ChangePoint
