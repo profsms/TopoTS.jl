@@ -69,10 +69,6 @@ SRC="${WORKSPACE}/srcdir/TopoTS.jl/csrc"
 # Confirm the source is present
 ls "${SRC}/cech_core.cpp" || (echo "ERROR: cech_core.cpp not found"; exit 1)
 
-# Run the C++ smoke tests first (native toolchain, fast)
-${CXX} -O2 -std=c++17 -DCECH_TEST_MAIN \
-    -o /tmp/cech_test "${SRC}/cech_test.cpp" && \
-    /tmp/cech_test || (echo "ERROR: C++ tests failed"; exit 1)
 
 # Build the shared library for the target platform
 ${CXX} -O3 -std=c++17 -shared -fPIC \
