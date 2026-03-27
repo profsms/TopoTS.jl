@@ -61,7 +61,7 @@ The diagrams agree up to a factor of √2. Use `:cech` for geometric exactness;
 ## Installation
 
 ```julia
-using Pkg; Pkg.add(url="https://github.com/shalkiewicz/TopoTS.jl")
+using Pkg; Pkg.add(url="https://github.com/profsms/TopoTS.jl")
 ```
 
 ### Building libcech (for the Čech filtration)
