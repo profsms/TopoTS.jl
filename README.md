@@ -40,7 +40,7 @@ time series  →  Takens embedding  →  persistent homology  →  vectorisation
 |---|---|---|
 | `:rips` | Vietoris–Rips | Default; any dimension; fast |
 | `:alpha` | Alpha (Delaunay) | O(n log n); exact; ≤3D recommended |
-| `:cech` | **Čech (native C++)** | Exact miniball criterion; requires `make` in `csrc/` |
+| `:cech` | **Čech (native C++)** | Exact miniball criterion |
 | `:edge_collapsed` | Edge-collapsed Rips | Same diagram as `:rips`; faster for n > 500 |
 | `:cubical` | Cubical sublevel-set | 1-D signal; no embedding needed |
 
@@ -77,7 +77,7 @@ cd csrc && make windows  # Windows (MinGW)
 cd csrc && make test     # run C++ smoke tests first
 ```
 
-Requires g++ ≥ 9 or clang++ ≥ 10 with C++17.
+Requires g++ ≥ 12 or clang++ ≥ 10 with C++17.
 
 ---
 
@@ -111,7 +111,7 @@ cp = crocker(wd; dim=1)    # heatmap of β₁(ε, t)
 
 ## Documentation
 
-- `docs/src/vignette.md` — full tutorial (thesis appendix / JSS submission)
+- `docs/src/vignette.md` — full tutorial
 - `docs/src/cech_implementation.md` — technical notes on the C++ implementation
 
 ---
