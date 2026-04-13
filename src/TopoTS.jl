@@ -27,7 +27,7 @@ The Čech filtration (`:cech`) is provided by a native C++17 extension
 
 **Mode 1 — JLL (preferred, zero compilation):**
 ```julia
-]add CechCore_jll   # install pre-built binary
+]add CechCore_jll   # registered in the General registry
 using TopoTS        # extension loads automatically
 persistent_homology(emb; filtration=:cech)
 ```

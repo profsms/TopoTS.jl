@@ -2,39 +2,46 @@
 
 **Topological Data Analysis for Time Series in Julia**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Julia 1.9+](https://img.shields.io/badge/Julia-1.9%2B-blueviolet)](https://julialang.org)
+---
 
-TopoTS.jl implements the complete pipeline from raw time series to topological inference:
+## Overview
 
-```
-time series  →  Takens embedding  →  persistent homology  →  vectorisation  →  statistics
-```
+TopoTS.jl provides a complete pipeline for applying topological data analysis (TDA) to time series:
+
+**time series → embedding → persistent homology → vectorisation → statistical inference**
+
+The package is designed for research applications in nonlinear dynamics, econometrics, and machine learning.
 
 ---
 
-## Features
+## Key Features
 
-| Module | Functions |
-|---|---|
-| **Embedding** | `embed`, `optimal_lag` (AMI), `optimal_dim` (FNN), `embed_multivariate` |
-| **Filtration** | `persistent_homology` — five filtration types (see below) |
-| **Betti curves** | `betti_curve` |
-| **Landscapes** | `landscape`, `mean_landscape`, `landscape_norm` |
-| **Persistence images** | `persistence_image` |
-| **Summary stats** | `total_persistence`, `persistent_entropy`, `amplitude` |
-| **Bootstrap** | `bootstrap_landscape`, `confidence_band` |
-| **Hypothesis tests** | `permutation_test`, `landscape_ttest` |
-| **Windowed PH** | `windowed_ph`, `WindowedDiagrams` |
-| **CROCKER plots** | `crocker`, `CROCKERPlot` |
-| **Change-point detection** | `changepoint_score`, `detect_changepoints`, `ChangePointEvent` |
-| **Sublevel-set PH** | `sublevel_ph`, `windowed_sublevel_ph` |
-| **Diagram kernels** | `pss_kernel`, `pwg_kernel`, `sliced_wasserstein_kernel`, `kernel_matrix` |
-| **Feature extraction** | `topo_features`, `TopoFeatureSpec`, `feature_names` |
+### Core Pipeline
+
+* Takens embedding (AMI, FNN)
+* Persistent homology (multiple filtrations)
+* Vectorisation (landscapes, Betti curves, persistence images)
+
+### Statistical Tools
+
+* Topological summary statistics
+* Bootstrap and confidence bands
+* Hypothesis testing
+
+### Time-dependent Analysis
+
+* Sliding-window persistent homology
+* CROCKER plots
+* Change-point detection
+
+### Machine Learning
+
+* Topological feature extraction
+* Kernel methods for persistence diagrams
 
 ---
 
-## Filtrations
+## Supported Filtrations
 
 | Symbol | Description | Notes |
 |---|---|---|
@@ -81,48 +88,37 @@ Requires g++ ≥ 12 or clang++ ≥ 10 with C++17.
 
 ---
 
-## Quick Start
+## Example Workflow
 
 ```julia
 using TopoTS
 
-ts = sin.(range(0, 20π, length=2000)) .+ 0.05 .* randn(2000)
-
-# Standard pipeline (Rips)
 τ   = optimal_lag(ts)
 emb = embed(ts; dim=3, lag=τ)
-dgms = persistent_homology(emb; dim_max=1)
-λ    = landscape(dgms, 1)
-
-# Čech filtration (exact)
-dgms_cech = persistent_homology(emb; filtration=:cech, threshold=2.0)
-
-# Change-point detection
-wd     = windowed_ph(ts; window=200, step=10, dim=2, lag=τ)
-scores = changepoint_score(wd, 1)
-events = detect_changepoints(scores.landscape)
-println("Change points at t = ", [e.time for e in events])
-
-# CROCKER plot
-cp = crocker(wd; dim=1)    # heatmap of β₁(ε, t)
+dgms = persistent_homology(emb)
+λ = landscape(dgms, 1)
 ```
 
 ---
 
-## Documentation
+## Visualisation
 
-- `docs/src/vignette.md` — full tutorial
-- `docs/src/cech_implementation.md` — technical notes on the C++ implementation
+Requires Makie backend:
+
+```julia
+using CairoMakie
+fig = plot_crocker(cp)
+```
 
 ---
-
-## Citation
-
-```
-Halkiewicz, S. M. S. (2026). Topological Data Analysis for Time Series.
-Master's Thesis, AGH University of Cracow.
-```
 
 ## License
 
-MIT
+GNU General Public License (GPL-3 or later)
+
+---
+
+## Author
+
+Stanisław M. S. Halkiewicz
+AGH University of Cracow

@@ -2,17 +2,17 @@
 deps/build.jl  —  TopoTS local build fallback for libcech
 
 This file is the FALLBACK build path for the Čech C++ library.
-It is used when the proper JLL package (libcech_jll) is not installed.
+It is used when the proper JLL package (CechCore_jll) is not installed.
 
 Execution order on `Pkg.build("TopoTS")`:
-  1. Julia checks if libcech_jll is installed in the active environment.
+  1. Julia checks if CechCore_jll is installed in the active environment.
      If yes, the JLL provides the pre-compiled binary automatically —
      this build.jl does nothing.
-  2. If libcech_jll is NOT installed, this file compiles the library
+  2. If CechCore_jll is NOT installed, this file compiles the library
      from source using whatever C++ compiler is available.
 
 To use the JLL (recommended for production/sharing):
-  pkg> add libcech_jll   # once published to the registry
+  pkg> add CechCore_jll   # available in the General registry
 
 To build locally (development / offline use):
   julia --project deps/build.jl
@@ -29,11 +29,11 @@ const LIB_EXT  = Sys.iswindows() ? "dll" : Sys.isapple() ? "dylib" : "so"
 const LIB_NAME = Sys.iswindows() ? "cech.dll" : "libcech.$LIB_EXT"
 const LIB_PATH = joinpath(LIB_DIR, LIB_NAME)
 
-# ── Step 1: Check if libcech_jll is already providing the library ─────────────
+# ── Step 1: Check if CechCore_jll is already providing the library ────────────
 function jll_available()
     try
-        @eval Main begin using libcech_jll end
-        lib = Main.libcech_jll.libcech
+        @eval Main begin using CechCore_jll end
+        lib = Main.CechCore_jll.libcech
         return isfile(lib)
     catch
         return false
@@ -41,7 +41,7 @@ function jll_available()
 end
 
 if jll_available()
-    println("libcech_jll is installed — no local build needed.")
+    println("CechCore_jll is installed — no local build needed.")
     println("The JLL provides pre-compiled binaries for all platforms.")
     exit(0)
 end
@@ -64,7 +64,7 @@ if isnothing(cxx)
 
     To fix this:
       • Install a C++ compiler (apt install g++ / brew install llvm)
-      • Or install the JLL:  pkg> add libcech_jll
+      • Or install the JLL:  pkg> add CechCore_jll
     """
     exit(0)
 end

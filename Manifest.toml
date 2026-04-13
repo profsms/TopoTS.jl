@@ -67,12 +67,6 @@ version = "1.1.0"
     StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
     StructTypes = "856f2bd8-1eba-4b0a-8007-ebc267875bd4"
 
-[[deps.CechCore_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl"]
-path = "jll/CechCore_jll"
-uuid = "06693213-f79a-4f07-b1f2-49bcb6776124"
-version = "1.0.0"
-
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra"]
 git-tree-sha1 = "e4c6a16e77171a5f5e25e9646617ab1c276c5607"
