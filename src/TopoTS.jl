@@ -32,13 +32,7 @@ using TopoTS        # extension loads automatically
 persistent_homology(emb; filtration=:cech)
 ```
 
-**Mode 2 — local build (development):**
-```julia
-# cd <pkg>/csrc && make    (or: using Pkg; Pkg.build("TopoTS"))
-persistent_homology(emb; filtration=:cech)
-```
-
-**Mode 3 — environment variable:**
+**Mode 2 — environment variable (CI / custom builds):**
 ```julia
 ENV["TOPOTS_LIBCECH"] = "/path/to/libcech.so"
 using TopoTS
@@ -53,16 +47,15 @@ using Libdl
 
 # ── Čech library path registry ────────────────────────────────────────────────
 # Populated by (in priority order):
-#   1. TopoTSCechExt.__init__()  (called when CechCore_jll is installed)
-#   2. TOPOTS_LIBCECH env var    (developer override)
-#   3. deps/lib/libcech.*        (local build fallback)
+#   1. TopoTSCechExt.__init__()  (called when CechCore_jll is loaded)
+#   2. TOPOTS_LIBCECH env var    (developer / CI override)
 const _CECH_LIB = Ref{String}("")
 
 """
     _register_cech_lib!(path::String)
 
 Register the path to `libcech`. Called by `TopoTSCechExt` (the JLL extension)
-on startup, or directly when using the env-var / local-build modes.
+on startup, or directly when using the env-var override.
 Internal — not part of the public API.
 """
 function _register_cech_lib!(path::String)
@@ -108,25 +101,14 @@ function cech_available()
 end
 
 function __init__()
-    # Priority 1: env-var override (developer / CI)
+    # Env-var override (developer / CI)
     if haskey(ENV, "TOPOTS_LIBCECH")
         p = ENV["TOPOTS_LIBCECH"]
         isfile(p) && (_CECH_LIB[] = p; return)
         @warn "TOPOTS_LIBCECH='$p' is not a file; ignoring"
     end
-
-    # Priority 2: local build in deps/lib/ (falls through if JLL is also
-    # present — the extension's __init__ runs after this and overwrites)
-    pkg_root = joinpath(@__DIR__, "..")
-    for ext in ("so", "dylib", "dll")
-        p = joinpath(pkg_root, "deps", "lib", "libcech.$ext")
-        if isfile(p)
-            _CECH_LIB[] = p
-            return
-        end
-    end
-    # If neither is found, _CECH_LIB[] stays ""; the JLL extension may
-    # set it later, or the user gets a clear error on :cech usage.
+    # Otherwise _CECH_LIB[] stays ""; TopoTSCechExt.__init__() sets it
+    # after this returns when CechCore_jll is present in the environment.
 end
 
 # ── Sub-modules ───────────────────────────────────────────────────────────────

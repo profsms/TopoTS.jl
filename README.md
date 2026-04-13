@@ -40,12 +40,13 @@ time series  →  Takens embedding  →  persistent homology  →  vectorisation
 |---|---|---|
 | `:rips` | Vietoris–Rips | Default; any dimension; fast |
 | `:alpha` | Alpha (Delaunay) | O(n log n); exact; ≤3D recommended |
-| `:cech` | **Čech (native C++)** | Exact miniball criterion |
+| `:cech` | **Čech (native C++)** | Exact miniball criterion; requires `CechCore_jll` |
 | `:edge_collapsed` | Edge-collapsed Rips | Same diagram as `:rips`; faster for n > 500 |
 | `:cubical` | Cubical sublevel-set | 1-D signal; no embedding needed |
 
 The Čech filtration is implemented as a native C++17 shared library
-(`csrc/cech_core.cpp`) using Welzl's miniball algorithm, called from Julia
+(Welzl's miniball algorithm) shipped via
+[CechCore_jll](https://github.com/profsms/CechCore_jll), called from Julia
 via `ccall`. It implements the `AbstractFiltration` interface from Ripserer.jl,
 so **all downstream functions work identically regardless of filtration type**.
 
@@ -64,20 +65,16 @@ The diagrams agree up to a factor of √2. Use `:cech` for geometric exactness;
 using Pkg; Pkg.add(url="https://github.com/profsms/TopoTS.jl")
 ```
 
-### Building libcech (for the Čech filtration)
+### Čech filtration
+
+`CechCore_jll` is a weak dependency — install it separately to enable `:cech`:
 
 ```julia
-using Pkg; Pkg.build("TopoTS")   # auto-detects compiler and builds
+using Pkg; Pkg.add("CechCore_jll")
 ```
 
-Or manually:
-```bash
-cd csrc && make          # Linux / macOS
-cd csrc && make windows  # Windows (MinGW)
-cd csrc && make test     # run C++ smoke tests first
-```
-
-Requires g++ ≥ 12 or clang++ ≥ 10 with C++17.
+Pre-built binaries are provided for all major platforms (Linux, macOS, Windows,
+FreeBSD — x86\_64, aarch64, riscv64). No compiler required.
 
 ---
 

@@ -2,7 +2,7 @@
 
 julia_version = "1.11.2"
 manifest_format = "2.0"
-project_hash = "10212feb47cf2227fcac419ff16395e17f51795c"
+project_hash = "ff861054e0553a8a4aea40c373e47b25c614fb4d"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra", "Requires"]
@@ -66,6 +66,12 @@ version = "1.1.0"
     SentinelArrays = "91c51154-3ec4-41a3-a24f-3f23e20d615c"
     StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
     StructTypes = "856f2bd8-1eba-4b0a-8007-ebc267875bd4"
+
+[[deps.CechCore_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "3a84305063f0960afa4aa73153e3ce8b0880e0c7"
+uuid = "724d9041-2a60-51e0-bb7b-08a7c2be9791"
+version = "1.0.0+0"
 
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra"]
