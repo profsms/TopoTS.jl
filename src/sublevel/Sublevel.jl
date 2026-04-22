@@ -19,7 +19,24 @@ AMS. Chapter VII.
 """
 module Sublevel
 
-export sublevel_ph, SublevelDiagram, windowed_sublevel_ph
+using Statistics: mean
+using FFTW: rfft
+import PersistenceDiagrams: birth, death
+import ..Landscapes: PersistenceLandscape, landscape
+import ..Windowed: WindowedDiagrams
+
+export sublevel_ph, SublevelDiagram,
+       windowed_sublevel_ph,
+       periodogram_ph,
+       windowed_periodogram_ph
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Extend birth/death for plain tuples so that _diagram_pairs in ChangePoint
+# can iterate over SublevelDiagram H0/H1 (Vector{Tuple{Float64,Float64}})
+# via the same code path as Ripserer DiagramCollections.
+# ─────────────────────────────────────────────────────────────────────────────
+birth(t::Tuple{<:Real,<:Real}) = t[1]
+death(t::Tuple{<:Real,<:Real}) = t[2]
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Types
@@ -52,6 +69,13 @@ function Base.show(io::IO, d::SublevelDiagram)
     println(io, "  H₀: $(length(d.H0)) pairs")
     print(io,   "  H₁: $(length(d.H1)) pairs")
 end
+
+# Index by homological dimension (1-based like Ripserer DiagramCollections):
+#   sd[1]  →  H₀ pairs   (dim = 0)
+#   sd[2]  →  H₁ pairs   (dim = 1)
+# This lets ChangePoint._diagram_pairs(wd[i][dim+1]) work transparently when
+# wd is a WindowedDiagrams{SublevelDiagram}.
+Base.getindex(sd::SublevelDiagram, i::Int) = i == 1 ? sd.H0 : sd.H1
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Union-Find
@@ -211,39 +235,189 @@ end
 """
     windowed_sublevel_ph(x::AbstractVector;
                          window   :: Int,
-                         step     :: Int = window ÷ 4,
-                         extended :: Bool = false)
-    -> NamedTuple{(:diagrams, :times), Tuple{Vector{SublevelDiagram}, Vector{Float64}}}
+                         step     :: Int  = window ÷ 4,
+                         extended :: Bool = false) -> WindowedDiagrams{SublevelDiagram}
 
 Apply `sublevel_ph` to each window of a time series.
-Returns the vector of diagrams and the corresponding time axis.
 
-Cheaper than `windowed_ph` (no embedding, O(W log W) per window)
-and particularly useful for detecting amplitude/frequency changes
-in a univariate series.
+Returns a `WindowedDiagrams{SublevelDiagram}` so that the result plugs
+directly into `changepoint_score`, `bottleneck_score`, `wasserstein_score`,
+and `landscape_score` without any conversion.
+
+Cheaper than `windowed_ph` (no embedding, O(W log W) per window) and
+particularly useful for detecting amplitude/frequency changes in a
+univariate series.
 
 # Example
 ```julia
-result = windowed_sublevel_ph(ts; window=200, step=20)
-# result.diagrams :: Vector{SublevelDiagram}
-# result.times    :: Vector{Float64}
+wd = windowed_sublevel_ph(ts; window=200, step=20)
+sc = changepoint_score(wd, 0)   # H₀ change-point scores
 ```
 """
 function windowed_sublevel_ph(x::AbstractVector;
                                window   :: Int,
                                step     :: Int  = max(1, window ÷ 4),
-                               extended :: Bool = false)
+                               extended :: Bool = false) :: WindowedDiagrams{SublevelDiagram}
     N = length(x)
     positions = collect(1 : step : N - window + 1)
-    times     = Float64[p + window / 2 for p in positions]
-    diagrams  = SublevelDiagram[]
+    times     = Float64[p + window / 2.0 for p in positions]
+    diagrams  = [sublevel_ph(x[t0 : t0 + window - 1]; extended=extended)
+                 for t0 in positions]
 
-    for t0 in positions
-        seg = x[t0 : t0 + window - 1]
-        push!(diagrams, sublevel_ph(seg; extended=extended))
+    # dim=0, lag=0 — no Takens embedding; dim_max=1 (H₀ and H₁ available)
+    return WindowedDiagrams{SublevelDiagram}(
+        diagrams, positions, times, window, step, 0, 0, 1, N)
+end
+
+# ─────────────────────────────────────────────────────────────────────────────
+# landscape extension for SublevelDiagram
+# ─────────────────────────────────────────────────────────────────────────────
+# Allows landscape_score (which calls landscape(wd[i], dim; ...)) to work
+# transparently when wd is a WindowedDiagrams{SublevelDiagram}.
+
+function landscape(dgm::SublevelDiagram, dim::Int;
+                   tgrid    = nothing,
+                   n_grid   :: Int = 500,
+                   n_layers :: Int = 5) :: PersistenceLandscape
+    pairs = dim == 0 ? dgm.H0 : dgm.H1
+
+    if isnothing(tgrid)
+        if isempty(pairs)
+            tgrid = range(0.0, 1.0; length=n_grid)
+        else
+            t_min = minimum(b for (b, _) in pairs)
+            t_max = maximum(d for (_, d) in pairs)
+            tgrid = range(t_min, t_max * 1.02; length=n_grid)
+        end
     end
 
-    return (diagrams=diagrams, times=times)
+    N      = length(tgrid)
+    layers = zeros(n_layers, N)
+
+    for (j, t) in enumerate(tgrid)
+        tent_vals = [max(0.0, min(t - b, d - t)) for (b, d) in pairs]
+        sort!(tent_vals; rev=true)
+        for k in 1:min(n_layers, length(tent_vals))
+            layers[k, j] = tent_vals[k]
+        end
+    end
+
+    return PersistenceLandscape(layers, tgrid, dim)
+end
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Spectral sublevel-set PH
+# ─────────────────────────────────────────────────────────────────────────────
+
+"""
+    periodogram_ph(signal::AbstractVector{<:Real};
+                   bw :: Int  = 5,
+                   fs :: Real = 1.0) -> SublevelDiagram
+
+Compute sublevel-set persistent homology of the smoothed power spectral
+density of `signal`.
+
+The pipeline is:
+1. Power spectrum via `rfft`: ``P[k] = |\\text{FFT}(x)[k]|^2 / N``
+2. Moving-average smoothing with half-bandwidth `bw`
+3. `sublevel_ph` applied to the smoothed spectrum
+
+The resulting diagram captures topological features of the spectral
+envelope — prominent peaks appear as long-lived H₀ bars.
+
+# Arguments
+- `bw` — moving-average half-bandwidth in frequency bins (default 5)
+- `fs` — sampling frequency (currently metadata only; default 1.0)
+
+# Returns
+A `SublevelDiagram` of the smoothed periodogram.
+
+# Example
+```julia
+sig = sin.(range(0, 20π, length=500))
+dgm = periodogram_ph(sig; bw=5)
+dgm.H0   # persistence pairs of spectral peaks
+```
+"""
+function periodogram_ph(signal::AbstractVector{<:Real};
+                        bw :: Int  = 5,
+                        fs :: Real = 1.0) :: SublevelDiagram
+    P        = abs2.(rfft(signal)) ./ length(signal)
+    nf       = length(P)
+    P_smooth = [mean(P[max(1, i - bw) : min(nf, i + bw)]) for i in 1:nf]
+    return sublevel_ph(P_smooth)
+end
+
+"""
+    windowed_periodogram_ph(signal::AbstractVector{<:Real};
+                            window :: Int,
+                            step   :: Int,
+                            bw     :: Int = 5) -> WindowedDiagrams{SublevelDiagram}
+
+Sliding-window spectral TDA: apply `periodogram_ph` to each window of
+`signal` and return a `WindowedDiagrams` suitable for `changepoint_score`.
+
+Useful for detecting frequency-domain regime changes (e.g. bearing-fault
+progression, frequency drift, spectral broadening).
+
+# Arguments
+- `window` — window length in samples
+- `step`   — stride between consecutive windows
+- `bw`     — periodogram smoothing half-bandwidth (default 5)
+
+# Example
+```julia
+wd = windowed_periodogram_ph(sig; window=256, step=32)
+sc = changepoint_score(wd, 0)
+```
+"""
+function windowed_periodogram_ph(signal::AbstractVector{<:Real};
+                                  window :: Int,
+                                  step   :: Int,
+                                  bw     :: Int = 5) :: WindowedDiagrams{SublevelDiagram}
+    N         = length(signal)
+    positions = collect(1 : step : N - window + 1)
+    times     = Float64[p + window / 2.0 for p in positions]
+    diagrams  = [periodogram_ph(signal[p : p + window - 1]; bw=bw)
+                 for p in positions]
+
+    return WindowedDiagrams{SublevelDiagram}(
+        diagrams, positions, times, window, step, 0, 0, 1, N)
+end
+
+"""
+    windowed_periodogram_ph(trials::AbstractVector{<:AbstractVector{<:Real}};
+                            bw :: Int = 5) -> WindowedDiagrams{SublevelDiagram}
+
+Per-trial spectral TDA: compute `periodogram_ph` for each trial in
+`trials` and return a `WindowedDiagrams` where each "window" is one trial.
+
+Intended for multi-trial datasets (e.g. NASA IMS bearing data, EEG epochs)
+where each trial is an independent signal segment.
+
+# Arguments
+- `trials` — vector of signal vectors (need not all be the same length)
+- `bw`     — periodogram smoothing half-bandwidth (default 5)
+
+# Returns
+`WindowedDiagrams{SublevelDiagram}` with `.times == 1:length(trials)`.
+
+# Example
+```julia
+trials = [randn(512) for _ in 1:50]
+wd     = windowed_periodogram_ph(trials)
+sc     = changepoint_score(wd, 0)
+```
+"""
+function windowed_periodogram_ph(trials::AbstractVector{<:AbstractVector{<:Real}};
+                                  bw :: Int = 5) :: WindowedDiagrams{SublevelDiagram}
+    n        = length(trials)
+    diagrams = [periodogram_ph(t; bw=bw) for t in trials]
+    positions = collect(1:n)
+    times     = Float64.(1:n)
+
+    return WindowedDiagrams{SublevelDiagram}(
+        diagrams, positions, times, 0, 1, 0, 0, 1, n)
 end
 
 end # module Sublevel

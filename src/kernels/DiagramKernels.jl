@@ -19,10 +19,11 @@ A stable multi-scale kernel for topological machine learning.
 *CVPR*, 4741–4748.
 """
 module DiagramKernels
+using Hungarian
 using PersistenceDiagrams: birth, death
 
 export pss_kernel, pwg_kernel, sliced_wasserstein_kernel,
-       kernel_matrix
+       kernel_matrix, wasserstein_distance
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
@@ -193,6 +194,89 @@ function _sliced_wasserstein(dgm1, dgm2; n_directions::Int = 100)
     end
 
     return sw / n_directions
+end
+
+# ─────────────────────────────────────────────────────────────────────────────
+# p-Wasserstein distance (exact, Hungarian assignment)
+# ─────────────────────────────────────────────────────────────────────────────
+
+"""
+    wasserstein_distance(d1, d2; p::Real = 2) -> Float64
+
+Compute the p-Wasserstein distance between two persistence diagrams.
+
+Each diagram is a `Vector{Tuple{Float64,Float64}}` of (birth, death) pairs.
+
+**Ground metric:** L∞ between off-diagonal points:
+```
+dist(p, q) = max(|b_p - b_q|, |d_p - d_q|)
+```
+
+**Diagonal matching cost:** half-persistence of the unmatched point:
+```
+dist(p, Δ) = (d_p - b_p) / 2
+```
+
+The optimal assignment is solved exactly with the Hungarian algorithm
+(`Hungarian.jl`). Returns `(Σ cost^p)^(1/p)`.
+
+# Arguments
+- `d1`, `d2` — diagrams as `Vector{Tuple{Float64,Float64}}`
+- `p`        — Wasserstein exponent (default 2)
+
+# Example
+```julia
+dgm1 = periodogram_ph(sig1).H0
+dgm2 = periodogram_ph(sig2).H0
+d = wasserstein_distance(dgm1, dgm2; p=2)
+```
+"""
+function wasserstein_distance(d1::Vector{Tuple{Float64,Float64}},
+                               d2::Vector{Tuple{Float64,Float64}};
+                               p::Real = 2) :: Float64
+    n1, n2 = length(d1), length(d2)
+
+    # degenerate cases — all unmatched points go to their diagonal
+    if n1 == 0 && n2 == 0
+        return 0.0
+    elseif n1 == 0
+        return sum(((dv - bv) / 2)^p for (bv, dv) in d2)^(1/p)
+    elseif n2 == 0
+        return sum(((dv - bv) / 2)^p for (bv, dv) in d1)^(1/p)
+    end
+
+    N   = n1 + n2
+    BIG = 1e9   # sentinel for structurally-forbidden assignments
+
+    C = fill(BIG, N, N)
+
+    # L∞ ground metric (raised to power p)
+    linf_p(b1, d1v, b2, d2v) = max(abs(b1 - b2), abs(d1v - d2v))^p
+    diag_p(bv, dv)            = ((dv - bv) / 2)^p
+
+    # rows 1..n1  : points from d1
+    # cols 1..n2  : points from d2
+    # col  n2+i   : diagonal slot for d1[i]
+    for (i, (b1, d1v)) in enumerate(d1)
+        for (j, (b2, d2v)) in enumerate(d2)
+            C[i, j] = linf_p(b1, d1v, b2, d2v)
+        end
+        C[i, n2 + i] = diag_p(b1, d1v)           # d1[i] → diagonal
+    end
+
+    # rows n1+1..N : diagonal copies of d2 points
+    # col j        : d2[j] → diagonal (only allowed assignment for this row)
+    # cols n2+1..N : free diagonal-to-diagonal (cost 0)
+    for (j, (b2, d2v)) in enumerate(d2)
+        C[n1 + j, j] = diag_p(b2, d2v)           # d2[j] copy → diagonal
+        for k in 1:n1
+            C[n1 + j, n2 + k] = 0.0              # diagonal ↔ diagonal: free
+        end
+    end
+
+    assignment, _ = hungarian(C)
+    total = sum(C[i, assignment[i]] for i in 1:N)
+    return total^(1 / p)
 end
 
 # ─────────────────────────────────────────────────────────────────────────────

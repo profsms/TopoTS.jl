@@ -24,34 +24,35 @@ export windowed_ph, WindowedDiagrams
 # ─────────────────────────────────────────────────────────────────────────────
 
 """
-    WindowedDiagrams
+    WindowedDiagrams{D}
 
 Result of sliding-window persistent homology computation.
 
-Each element `wd[i]` is the `DiagramCollection` computed from the
-sub-series starting at sample `wd.positions[i]`.
+Each element `wd[i]` is the diagram computed from the sub-series
+starting at sample `wd.positions[i]`. The element type `D` is
+`DiagramCollection` for embedding-based filtrations and
+`SublevelDiagram` for sublevel-set / periodogram methods.
 
 # Fields
-- `diagrams   :: Vector{DiagramCollection}` — one per window
-- `positions  :: Vector{Int}`               — start index of each window
-- `times      :: Vector{Float64}`           — centre time of each window
-                                               (in sample units)
-- `window     :: Int`   — window length in samples
+- `diagrams   :: Vector{D}`    — one diagram per window / trial
+- `positions  :: Vector{Int}`  — start index of each window
+- `times      :: Vector{Float64}` — centre time of each window
+- `window     :: Int`   — window length in samples (0 for trial-based)
 - `step       :: Int`   — step size between windows
-- `dim        :: Int`   — Takens embedding dimension
-- `lag        :: Int`   — Takens embedding lag
+- `dim        :: Int`   — Takens embedding dimension (0 for sublevel)
+- `lag        :: Int`   — Takens embedding lag (0 for sublevel)
 - `dim_max    :: Int`   — maximum homological dimension
-- `n_orig     :: Int`   — original time series length
+- `n_orig     :: Int`   — original series length (or trial count)
 
 # Iteration
 ```julia
 for dgms in wd
-    # dgms :: DiagramCollection
+    # dgms :: D
 end
 ```
 """
-struct WindowedDiagrams
-    diagrams  :: Vector{DiagramCollection}
+struct WindowedDiagrams{D}
+    diagrams  :: Vector{D}
     positions :: Vector{Int}
     times     :: Vector{Float64}
     window    :: Int
@@ -69,9 +70,15 @@ Base.eachindex(wd::WindowedDiagrams)       = eachindex(wd.diagrams)
 
 function Base.show(io::IO, wd::WindowedDiagrams)
     println(io, "WindowedDiagrams:")
-    println(io, "  windows  : $(length(wd)) × $(wd.window) samples (step=$(wd.step))")
-    println(io, "  embedding: dim=$(wd.dim), lag=$(wd.lag)")
-    print(io,   "  H₀…H$(wd.dim_max) computed per window")
+    if wd.window > 0
+        println(io, "  windows  : $(length(wd)) × $(wd.window) samples (step=$(wd.step))")
+    else
+        println(io, "  trials   : $(length(wd))")
+    end
+    if wd.dim > 0
+        println(io, "  embedding: dim=$(wd.dim), lag=$(wd.lag)")
+    end
+    print(io, "  H₀…H$(wd.dim_max) computed per window")
 end
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -164,7 +171,7 @@ function windowed_ph(x::AbstractVector{T};
     n_windows = length(positions)
 
     diagrams = Vector{DiagramCollection}(undef, n_windows)
-    times    = Float64[p + window / 2 for p in positions]
+    times    = Float64[p + window / 2.0 for p in positions]
 
     for (i, t0) in enumerate(positions)
         verbose && print("\rwindowed_ph: window $i / $n_windows")

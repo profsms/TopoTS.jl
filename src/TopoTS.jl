@@ -157,6 +157,7 @@ export
     persistent_homology, DiagramCollection,
     # Sublevel-set PH
     sublevel_ph, SublevelDiagram, windowed_sublevel_ph,
+    periodogram_ph, windowed_periodogram_ph,
     # Betti curves
     betti_curve, BettiCurve,
     # Landscapes
@@ -179,6 +180,7 @@ export
     detect_changepoints, ChangePointEvent,
     # Kernels
     pss_kernel, pwg_kernel, sliced_wasserstein_kernel, kernel_matrix,
+    wasserstein_distance,
     # Features
     topo_features, TopoFeatureSpec, feature_names,
     # Visualisations

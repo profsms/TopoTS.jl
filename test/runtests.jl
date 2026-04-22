@@ -349,3 +349,5 @@ end
         @test size(cp.surface, 1) == 30
     end
 end
+
+include("test_spectral_changepoint.jl")
