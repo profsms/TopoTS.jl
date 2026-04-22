@@ -1,7 +1,7 @@
 name = "TopoTS"
 uuid = "dc0f521d-5d0d-4248-bff6-a823dd2a26ec"
 authors = ["Stanisław M. S. Halkiewicz <s.halkiewicz@student.agh.edu.pl>"]
-version = "0.5.1"
+version = "0.5.2"
 
 [deps]
 CechCore_jll = "724d9041-2a60-51e0-bb7b-08a7c2be9791"
