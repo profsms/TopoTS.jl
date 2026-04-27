@@ -177,7 +177,8 @@ export
     # Change-point detection
     changepoint_score, ChangePointResult,
     bottleneck_score, wasserstein_score, landscape_score,
-    detect_changepoints, ChangePointEvent,
+    detect_changepoints, detect_changepoints_windowed, ChangePointEvent,
+    andrews_supF,
     # Kernels
     pss_kernel, pwg_kernel, sliced_wasserstein_kernel, kernel_matrix,
     wasserstein_distance,

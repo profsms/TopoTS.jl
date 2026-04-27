@@ -1,4 +1,5 @@
 using Test
+using Random
 using TopoTS
 using PersistenceDiagrams: birth, death
 
@@ -351,3 +352,4 @@ end
 end
 
 include("test_spectral_changepoint.jl")
+include("test_changepoint.jl")
