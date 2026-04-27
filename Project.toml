@@ -1,6 +1,6 @@
 name = "TopoTS"
 uuid = "dc0f521d-5d0d-4248-bff6-a823dd2a26ec"
-authors = ["Stanisław M. S. Halkiewicz <s.halkiewicz@student.agh.edu.pl>"]
+authors = ["Stanisław M. S. Halkiewicz <smsh@student.agh.edu.pl>"]
 version = "0.5.0"
 
 [deps]
