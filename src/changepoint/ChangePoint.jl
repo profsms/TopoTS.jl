@@ -33,9 +33,8 @@ using ..Filtration:  DiagramCollection
 using PersistenceDiagrams: birth, death
 
 export changepoint_score, ChangePointResult,
-       detect_changepoints, detect_changepoints_windowed, ChangePointEvent,
-       bottleneck_score, wasserstein_score, landscape_score,
-       andrews_supF
+       detect_changepoints, ChangePointEvent,
+       bottleneck_score, wasserstein_score, landscape_score
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Diagram distances (self-contained; avoids importing Ripserer internals)
@@ -460,15 +459,11 @@ end
 A detected topological change point.
 
 # Fields
-- `time       :: Float64`               — time (window centre) of the event
-- `index      :: Int`                   — index into the score vector
-- `score      :: Float64`               — score value at the event
-- `score_type :: Symbol`                — which score was used
-- `dim        :: Int`                   — homological dimension
-- `rstar_R    :: Union{Float64,Nothing}` — relative position r*/R in [0,1]
-                                           (`:rss` and `:andrews` only)
-- `sup_F      :: Union{Float64,Nothing}` — Andrews sup-F statistic
-                                           (`:andrews` only)
+- `time      :: Float64` — time (window centre) of the event
+- `index     :: Int`     — index into the score vector
+- `score     :: Float64` — score value at the event
+- `score_type :: Symbol` — which score was used
+- `dim       :: Int`     — homological dimension
 """
 struct ChangePointEvent
     time       :: Float64
@@ -476,15 +471,10 @@ struct ChangePointEvent
     score      :: Float64
     score_type :: Symbol
     dim        :: Int
-    rstar_R    :: Union{Float64, Nothing}
-    sup_F      :: Union{Float64, Nothing}
 end
 
 function Base.show(io::IO, e::ChangePointEvent)
-    s = "ChangePoint(t=$(round(e.time,digits=2)), score=$(round(e.score,sigdigits=3)), $(e.score_type), H$(e.dim)"
-    !isnothing(e.sup_F)   && (s *= ", sup_F=$(round(e.sup_F,sigdigits=4))")
-    !isnothing(e.rstar_R) && (s *= ", r*/R=$(round(e.rstar_R,digits=3))")
-    print(io, s * ")")
+    print(io, "ChangePoint(t=$(round(e.time,digits=2)), score=$(round(e.score,sigdigits=3)), $(e.score_type), H$(e.dim))")
 end
 
 """
@@ -552,317 +542,10 @@ function detect_changepoints(result::ChangePointResult;
 
     for i in selected
         push!(events, ChangePointEvent(
-            result.times[i], i, s[i], result.score_type, result.dim,
-            nothing, nothing))
+            result.times[i], i, s[i], result.score_type, result.dim))
     end
 
     return events
-end
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Andrews (1993) critical values — Table 1, 1 restriction, 15% trimming
-# ─────────────────────────────────────────────────────────────────────────────
-
-const ANDREWS_CV = Dict(
-    0.10 => 7.12,
-    0.05 => 8.85,
-    0.01 => 12.16,
-)
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Offline helpers
-# ─────────────────────────────────────────────────────────────────────────────
-
-"""
-    _rss_changepoint(score; r0) -> (r_star::Int, best_rss::Float64)
-
-Offline single-breakpoint detection via RSS minimisation.
-Returns the index `r_star` that minimises within-segment RSS and the
-minimum RSS value. O(n) via prefix sums.
-"""
-function _rss_changepoint(score::Vector{Float64}; r0::Int = 0)
-    R  = length(score)
-    r0 = r0 == 0 ? round(Int, 0.15 * R) : r0
-    r0 = max(r0, 1)
-
-    S  = cumsum(score)
-    S2 = cumsum(score .^ 2)
-
-    best_rss = Inf
-    best_r   = div(R, 2)
-
-    for r in r0 : R - r0
-        n1  = r;      n2  = R - r
-        mu1 = S[r] / n1
-        mu2 = (S[R] - S[r]) / n2
-        rss = (S2[r] - n1 * mu1^2) + ((S2[R] - S2[r]) - n2 * mu2^2)
-        if rss < best_rss
-            best_rss = rss
-            best_r   = r
-        end
-    end
-
-    return best_r, best_rss
-end
-
-"""
-    andrews_supF(score; r0, alpha)
-    -> NamedTuple (r_star, sup_F, significant, cv)
-
-Andrews (1993) sup-F test for a single structural break in `score`.
-
-Computes the F-statistic at every candidate breakpoint in the trimmed
-interior `[r0, R-r0]` and returns the maximum (sup-F). Compares against
-the Andrews (1993) Table 1 critical value for 1 restriction at significance
-level `alpha` (supported: 0.10, 0.05, 0.01).
-
-# Reference
-Andrews, D.W.K. (1993). Tests for Parameter Instability and Structural
-Change with Unknown Change Point. *Econometrica*, 61(4), 821–856.
-"""
-function andrews_supF(score::Vector{Float64};
-                      r0    :: Int     = 0,
-                      alpha :: Float64 = 0.05)
-    R  = length(score)
-    r0 = r0 == 0 ? round(Int, 0.15 * R) : r0
-    r0 = max(r0, 1)
-
-    S  = cumsum(score)
-    S2 = cumsum(score .^ 2)
-
-    total_mean = S[R] / R
-    total_rss  = S2[R] - R * total_mean^2
-
-    best_F = -Inf
-    best_r = r0
-
-    for r in r0 : R - r0
-        n1 = r;   n2 = R - r
-        mu1 = S[r] / n1
-        mu2 = (S[R] - S[r]) / n2
-        rss_within = (S2[r] - n1 * mu1^2) + ((S2[R] - S2[r]) - n2 * mu2^2)
-
-        # F = (RSS_null − RSS_alt) / (RSS_alt / (R − 2))
-        F = (total_rss - rss_within) / (rss_within / max(R - 2, 1))
-
-        if F > best_F
-            best_F = F
-            best_r = r
-        end
-    end
-
-    cv          = get(ANDREWS_CV, alpha, ANDREWS_CV[0.05])
-    significant = best_F > cv
-
-    return (r_star=best_r, sup_F=best_F, significant=significant, cv=cv)
-end
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Multi-method detect_changepoints (raw score vector dispatch)
-# ─────────────────────────────────────────────────────────────────────────────
-
-"""
-    detect_changepoints(score::Vector{Float64};
-                        method   :: Symbol  = :cusum_mad,
-                        n_mad    :: Float64 = 3.0,
-                        n_sigma  :: Float64 = 3.0,
-                        k        :: Int     = 10,
-                        win      :: Int     = 50,
-                        alpha    :: Float64 = 0.05,
-                        r0       :: Int     = 0,
-                        min_gap  :: Int     = 5,
-                        times    :: Union{Vector{Float64}, Nothing} = nothing,
-                        score_type :: Symbol = :unknown,
-                        dim        :: Int    = -1)
-    -> Vector{ChangePointEvent}
-
-Detect change points from a raw score vector using one of six methods.
-`times`, `score_type`, and `dim` are metadata attached to returned events;
-when `times` is `nothing`, event times default to their index.
-
-| `method`           | Description                                        |
-|--------------------|----------------------------------------------------|
-| `:cusum_mad`       | Threshold = median + `n_mad` × MAD  (default)     |
-| `:cusum_3sigma`    | Threshold = μ + `n_sigma` × σ  (burn-in = `r0`)   |
-| `:cusum_sustained` | `:cusum_3sigma` threshold, `k` consecutive hits    |
-| `:percentile`      | 99th percentile of burn-in period                  |
-| `:cusum_adaptive`  | Sliding-window baseline of width `win`             |
-| `:rss`             | Offline RSS minimisation — single best breakpoint  |
-| `:andrews`         | Andrews (1993) sup-F — single breakpoint if signif |
-"""
-function detect_changepoints(score::Vector{Float64};
-                              method     :: Symbol  = :cusum_mad,
-                              n_mad      :: Float64 = 3.0,
-                              n_sigma    :: Float64 = 3.0,
-                              k          :: Int     = 10,
-                              win        :: Int     = 50,
-                              alpha      :: Float64 = 0.05,
-                              r0         :: Int     = 0,
-                              min_gap    :: Int     = 5,
-                              times      :: Union{Vector{Float64}, Nothing} = nothing,
-                              score_type :: Symbol  = :unknown,
-                              dim        :: Int     = -1)
-
-    n     = length(score)
-    times = isnothing(times) ? Float64.(1:n) : times
-    _ev(i, rstar_R=nothing, sup_F=nothing) =
-        ChangePointEvent(times[i], i, score[i], score_type, dim, rstar_R, sup_F)
-
-    # ── offline methods ───────────────────────────────────────────────────────
-    if method == :rss
-        r, _ = _rss_changepoint(score; r0=r0)
-        return [_ev(r, r / n)]
-
-    elseif method == :andrews
-        res = andrews_supF(score; r0=r0, alpha=alpha)
-        res.significant || return ChangePointEvent[]
-        return [_ev(res.r_star, res.r_star / n, res.sup_F)]
-    end
-
-    # ── online methods — compute threshold, then find peaks ──────────────────
-    burn = r0 == 0 ? max(2, round(Int, 0.15 * n)) : max(r0, 2)
-
-    τ = if method == :cusum_mad
-        med = median(score)
-        mad = median(abs.(score .- med))
-        med + n_mad * 1.4826 * mad
-
-    elseif method == :cusum_3sigma
-        μ = mean(score[1:burn]); σ = std(score[1:burn])
-        μ + n_sigma * σ
-
-    elseif method == :cusum_sustained || method == :percentile
-        if method == :percentile
-            quantile(score[1:min(burn, n)], 0.99)
-        else
-            μ = mean(score[1:burn]); σ = std(score[1:burn])
-            μ + n_sigma * σ
-        end
-
-    elseif method == :cusum_adaptive
-        # placeholder threshold for first pass — overridden per-point below
-        0.0
-
-    else
-        throw(ArgumentError("Unknown method :$method. Choose from " *
-            ":cusum_mad, :cusum_3sigma, :cusum_sustained, :percentile, " *
-            ":cusum_adaptive, :rss, :andrews"))
-    end
-
-    # ── sustained-exceedance (M2) ─────────────────────────────────────────────
-    if method == :cusum_sustained
-        events   = ChangePointEvent[]
-        run_len  = 0
-        last_cp  = -min_gap - 1
-        for i in 1:n
-            if score[i] ≥ τ
-                run_len += 1
-                if run_len == k && i - last_cp ≥ min_gap
-                    push!(events, _ev(i - k + 1))
-                    last_cp = i
-                    run_len = 0
-                end
-            else
-                run_len = 0
-            end
-        end
-        return events
-    end
-
-    # ── adaptive sliding-window (M4) ─────────────────────────────────────────
-    if method == :cusum_adaptive
-        events  = ChangePointEvent[]
-        last_cp = -min_gap - 1
-        for i in 1:n
-            lo   = max(1, i - win)
-            hi   = i - 1
-            if hi < lo
-                continue        # not enough history yet
-            end
-            seg = score[lo:hi]
-            μ_w = mean(seg); σ_w = std(seg)
-            τ_i = μ_w + n_sigma * σ_w
-            if score[i] ≥ τ_i && i - last_cp ≥ min_gap
-                push!(events, _ev(i))
-                last_cp = i
-            end
-        end
-        return events
-    end
-
-    # ── standard threshold + peak-finding (cusum_mad, cusum_3sigma, percentile)
-    candidates = [(score[i], i) for i in 1:n if score[i] ≥ τ]
-    sort!(candidates; rev=true)
-
-    selected = Int[]
-    for (_, i) in candidates
-        all(abs(i - j) ≥ min_gap for j in selected) && push!(selected, i)
-    end
-    sort!(selected)
-
-    return [_ev(i) for i in selected]
-end
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Higher-level convenience: score + detect in one call
-# ─────────────────────────────────────────────────────────────────────────────
-
-"""
-    detect_changepoints_windowed(wd::WindowedDiagrams;
-                                 dim      :: Int    = 1,
-                                 score    :: Symbol = :landscape,
-                                 method   :: Symbol = :andrews,
-                                 n_grid   :: Int    = 50,
-                                 n_layers :: Int    = 2,
-                                 kwargs...)
-    -> (events::Vector{ChangePointEvent}, score_vec::Vector{Float64})
-
-Full change-point pipeline in one call: compute a topological score from
-`wd`, then detect breakpoints using the chosen `method`.
-
-Returns both the events and the raw score vector so the caller can plot them.
-
-# Arguments
-- `dim`      — homological dimension
-- `score`    — `:landscape`, `:wasserstein`, or `:bottleneck`
-- `method`   — any method accepted by `detect_changepoints`
-                (default `:andrews` for single-experiment offline use;
-                 use `:cusum_mad` for online / streaming use)
-- `n_grid`, `n_layers` — passed to `landscape_score` when `score=:landscape`
-- `kwargs`   — forwarded to `detect_changepoints` (e.g. `alpha`, `n_mad`)
-
-# Example
-```julia
-wd = windowed_ph(ts; window=100, step=10, dim=2, lag=8, dim_max=1)
-events, sc = detect_changepoints_windowed(wd; dim=1, method=:andrews)
-```
-"""
-function detect_changepoints_windowed(wd::WindowedDiagrams;
-                                       dim      :: Int    = 1,
-                                       score    :: Symbol = :landscape,
-                                       method   :: Symbol = :andrews,
-                                       n_grid   :: Int    = 50,
-                                       n_layers :: Int    = 2,
-                                       kwargs...)
-
-    cr = if score == :landscape
-        landscape_score(wd, dim; n_grid=n_grid, n_layers=n_layers)
-    elseif score == :wasserstein
-        wasserstein_score(wd, dim)
-    elseif score == :bottleneck
-        bottleneck_score(wd, dim)
-    else
-        throw(ArgumentError("score must be :landscape, :wasserstein, or :bottleneck"))
-    end
-
-    events = detect_changepoints(cr.scores;
-                                  method     = method,
-                                  times      = cr.times,
-                                  score_type = cr.score_type,
-                                  dim        = cr.dim,
-                                  kwargs...)
-
-    return (events=events, score_vec=cr.scores)
 end
 
 end # module ChangePoint
