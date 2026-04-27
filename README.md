@@ -27,9 +27,9 @@ time series  →  Takens embedding  →  persistent homology  →  vectorisation
 | **Hypothesis tests** | `permutation_test`, `landscape_ttest` |
 | **Windowed PH** | `windowed_ph`, `WindowedDiagrams` |
 | **CROCKER plots** | `crocker`, `CROCKERPlot` |
-| **Change-point detection** | `changepoint_score`, `detect_changepoints`, `ChangePointEvent` |
-| **Sublevel-set PH** | `sublevel_ph`, `windowed_sublevel_ph` |
-| **Diagram kernels** | `pss_kernel`, `pwg_kernel`, `sliced_wasserstein_kernel`, `kernel_matrix` |
+| **Change-point detection** | `changepoint_score`, `detect_changepoints`, `detect_changepoints_windowed`, `andrews_supF` |
+| **Sublevel-set PH** | `sublevel_ph`, `windowed_sublevel_ph`, `periodogram_ph`, `windowed_periodogram_ph` |
+| **Diagram kernels** | `pss_kernel`, `pwg_kernel`, `sliced_wasserstein_kernel`, `kernel_matrix`, `wasserstein_distance` |
 | **Feature extraction** | `topo_features`, `TopoFeatureSpec`, `feature_names` |
 
 ---
@@ -94,14 +94,42 @@ dgms = persistent_homology(emb; dim_max=1)
 # Čech filtration (exact)
 dgms_cech = persistent_homology(emb; filtration=:cech, threshold=2.0)
 
-# Change-point detection
-wd     = windowed_ph(ts; window=200, step=10, dim=2, lag=τ)
-scores = changepoint_score(wd, 1)
-events = detect_changepoints(scores.landscape)
+# Change-point detection — one-call convenience
+wd = windowed_ph(ts; window=200, step=10, dim=2, lag=τ)
+events, sc = detect_changepoints_windowed(wd; dim=1, method=:andrews)
 println("Change points at t = ", [e.time for e in events])
+
+# Spectral change-point detection (frequency-domain)
+wd_spec = windowed_periodogram_ph(ts; window=200, step=10)
+events_spec, _ = detect_changepoints_windowed(wd_spec; dim=0, method=:cusum_mad)
 
 # CROCKER plot
 cp = crocker(wd; dim=1)    # heatmap of β₁(ε, t)
+```
+
+---
+
+## Change-point detection methods
+
+`detect_changepoints` accepts a `method` keyword covering six approaches:
+
+| `method` | Type | Description |
+|---|---|---|
+| `:cusum_mad` | online | Threshold = median + `n_mad`×MAD (default) |
+| `:cusum_3sigma` | online | Threshold = μ + `n_sigma`×σ over burn-in |
+| `:cusum_sustained` | online | `k` consecutive exceedances required |
+| `:percentile` | online | 99th percentile of burn-in period |
+| `:cusum_adaptive` | online | Sliding-window baseline of width `win` |
+| `:rss` | offline | RSS minimisation — single best breakpoint |
+| `:andrews` | offline | Andrews (1993) sup-F test |
+
+```julia
+# Raw score vector → events
+score = changepoint_score(wd, 1).landscape.scores
+events = detect_changepoints(score; method=:andrews, alpha=0.05)
+
+# Or skip the intermediate step entirely
+events, score_vec = detect_changepoints_windowed(wd; dim=1, method=:rss)
 ```
 
 ---
