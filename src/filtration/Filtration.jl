@@ -119,30 +119,63 @@ end
 # Čech via libcech
 # ─────────────────────────────────────────────────────────────────────────────
 
+function _cech_libpath()
+    # 1. Preferred: already initialized by TopoTS
+    try
+        libpath = TopoTS._CECH_LIB[]
+        if !isempty(libpath) && isfile(libpath)
+            return libpath
+        end
+    catch
+    end
+
+    # 2. Preferred runtime fallback: JLL artifact
+    try
+        @eval import CechCore_jll
+        libpath = CechCore_jll.libcech
+        if isfile(libpath)
+            try
+                TopoTS._CECH_LIB[] = libpath
+            catch
+            end
+            return libpath
+        end
+    catch err
+        @debug "Could not load CechCore_jll" exception=(err, catch_backtrace())
+    end
+
+    # 3. Manual override
+    if haskey(ENV, "TOPOTS_LIBCECH")
+        libpath = ENV["TOPOTS_LIBCECH"]
+        if isfile(libpath)
+            try
+                TopoTS._CECH_LIB[] = libpath
+            catch
+            end
+            return libpath
+        end
+    end
+
+    return ""
+end
+
 function _compute_cech(pts, dim_max, threshold, modulus)
-    libpath = TopoTS._CECH_LIB[]
+    libpath = _cech_libpath()
 
     if isempty(libpath) || !isfile(libpath)
         error("""
         Čech filtration: libcech not found.
 
-        Install the pre-built binary (recommended):
+        Install the pre-built binary:
             ]add CechCore_jll
 
-        Or build locally:
-            cd <package_root>/csrc && make
-            # (or: using Pkg; Pkg.build("TopoTS"))
-
         Or point to an existing build:
-            ENV["TOPOTS_LIBCECH"] = "/path/to/libcech.so"
+            ENV["TOPOTS_LIBCECH"] = "/path/to/libcech"
         """)
     end
 
     n = size(pts, 1)
-
-    # With n points, homology above dimension n-2 is impossible.
     dim_eff = min(dim_max, max(n - 2, 0))
-
     thr = isinf(threshold) ? 1e18 : Float64(threshold)
 
     filt = CechFiltration.build_cech_filtration(
@@ -154,7 +187,6 @@ function _compute_cech(pts, dim_max, threshold, modulus)
 
     return ripserer(filt; dim_max = dim_eff, modulus = modulus)
 end
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────────────────────────
