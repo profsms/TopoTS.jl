@@ -8,6 +8,7 @@ the same topological structure.
 module HypothesisTests
 
 using Statistics
+using SpecialFunctions: erfc
 using ..Landscapes: PersistenceLandscape, mean_landscape, landscape_norm
 
 export permutation_test, landscape_ttest

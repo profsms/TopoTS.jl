@@ -1,7 +1,7 @@
 name = "TopoTS"
 uuid = "dc0f521d-5d0d-4248-bff6-a823dd2a26ec"
 authors = ["Stanisław M. S. Halkiewicz <smsh@student.agh.edu.pl>"]
-version = "0.6.2"
+version = "0.6.3"
 
 [deps]
 CechCore_jll = "724d9041-2a60-51e0-bb7b-08a7c2be9791"
@@ -17,6 +17,7 @@ Ripserer = "aa79e827-bd0b-42a8-9f10-2b302677a641"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 
 [extensions]
 TopoTSCechExt = "CechCore_jll"
