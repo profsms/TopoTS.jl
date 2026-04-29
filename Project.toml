@@ -24,6 +24,7 @@ TopoTSCechExt = "CechCore_jll"
 
 [compat]
 CechCore_jll = "1"
+SpecialFunctions = "2"
 Distances = "0.10"
 FFTW = "1"
 Hungarian = "0.6"
